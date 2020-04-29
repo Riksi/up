@@ -1,0 +1,113 @@
+<html>
+    <head>
+        <link rel="icon" 
+            type="image/png" 
+            href="favicon.ico">
+        <script src="https://cdn.plot.ly/plotly-1.2.0.min.js"></script>
+        <script>
+            
+
+            var days = {
+                items: {},
+                add: function(date, value){
+                    if(new Date(date) != 'Invalid Date'){
+                        this.items[date] = value;
+                        this.plot();
+                        this.save();
+                    }
+                    else{
+                        console.log('Invalid date' + date);
+                    }
+                },
+                delete: function(date){
+                    delete this.items[date];
+                    this.plot();
+                    this.save();
+                },
+                plot: function (){
+                    var dates = []
+                    for (date in this.items){
+                        if (this.items[date] !== null){
+                            dates.push(date);
+                        }
+                    }
+                    dates = dates.sort(
+                        (x, y) => (new Date(x).getTime() < new Date(y).getTime()) ? -1: 1
+                    )
+                    var qualities = dates.map((x) => this.items[x])
+                    var data = [
+                        {
+                            x: dates.map((x)=>new Date(x).toDateString()),
+                            y: qualities,
+                            marker: {
+                                color: qualities.map((q)=>(q < 0)? 'red' : 'green')
+                            },
+                            type: 'bar'
+                        }
+                    ];
+                    if (dates.length > 0){
+                        Plotly.newPlot('day', data);
+                    }
+                    else{
+                        document.getElementById('day').innerHTML = ""
+                    }
+                    
+                },
+                save: function(){
+                    localStorage.setItem('days', JSON.stringify(this.items))
+                },
+                load: function(){
+                    var maybeDays = localStorage.getItem('days');
+                    if (maybeDays !== null){
+                        this.items = JSON.parse(maybeDays);
+                        this.plot();
+                    }
+                }
+
+            }
+            window.onload=function(){
+                days.load()
+                document.getElementById('add').addEventListener(
+                    'click', (e) => {
+                        var form = document.forms["form"];
+                        days.add(
+                                form['date'].value,
+                                form['u'].checked ? -1 : 1
+                            )
+                    }
+                )
+
+                document.getElementById('delete').addEventListener(
+                    'click', (e) => {
+                        var form = document.forms["form"];
+                        days.delete(form['date'].value)
+                    }
+                )
+            }
+        </script>
+        <style>
+            form div{
+                float: left;
+                padding: 0 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>How was your day?</h1>
+        <form name='form'>
+            <div><input name="date" type="date"></div>
+            <div>
+                <input type="radio" id="u" name="up" value="u" checked>
+                <label for="u">Un</label>
+            </div>
+            <div><input type="radio" id="p" name="up" value="p">
+                <label for="p">Productive</label>
+            </div>
+            <input type="button"  id="add" value="Add">
+            <input type="button"  id="delete" value="Delete">
+        </form>
+        <div id='day'>
+
+        </div>
+    </body>
+</html>
